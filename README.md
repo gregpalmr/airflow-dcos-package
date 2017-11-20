@@ -13,15 +13,15 @@ Contents:
 
 ``USAGE``
 
-1. Clone this repo on your client computer
+# 1. Clone this repo on your client computer
 
      $ git clone https://github.com/gregpalmr/airflow-dcos-package
 
      $ cd airflow-dcos-package
 
-2. Launch a DC/OS cluster with at least 3 private agent nodes and 1 public agent node.
+# 2. Launch a DC/OS cluster with at least 3 private agent nodes and 1 public agent node.
 
-3. Build the Airflow DC/OS Package using the Mesosphere SDK.
+# 3. Build the Airflow DC/OS Package using the Mesosphere SDK.
 
 Mesosphere's DC/OS SDK is a collection of tools, libraries, and documentation for easy integration and automation of stateful services, such as databases, message brokers, and caching services. The SDK is used to build a turn-key package that installs all of the tasks needed to support the Apache Airflow DAG Scheduler running on DC/OS. 
 
@@ -73,15 +73,15 @@ When the build process is complete, you will see a message like this:
     dcos package repo add --index=0 airflow-aws https://universe-converter.mesosphere.com/transform?url=https://YOUR-S3-BUCKET.s3.amazonaws.com/dcos_catalog/airflow/HASH-VALUE/stub-universe-airflow.json
     dcos package install --yes airflow
 
-4. Install the newly built DC/OS package repo and launch the Airflow package.
+# 4. Install the newly built DC/OS package repo and launch the Airflow package.
 
-    # Uninstall any previous Airflow package repo (Catalog)
+    Uninstall any previous Airflow package repo (Catalog)
     $ dcos package repo remove airflow-aws
 
-    # Install the newly built Airflow package repo (Catalog)
+    Install the newly built Airflow package repo (Catalog)
     $ dcos package repo add --index=0 airflow-aws https://universe-converter.mesosphere.com/transform?url=https://YOUR-S3-BUCKET.s3.amazonaws.com/dcos_catalog/airflow/HASH-VALUE/stub-universe-airflow.json
 
-    # Install the Airflow Catalog
+    Install the Airflow Catalog
     $ dcos package install --yes airflow
 
     Or use the DC/OS Dashboard's Catalog panel to install the Airflow service:
@@ -92,7 +92,7 @@ When the build process is complete, you will see a message like this:
 
     ![DC/OS Airflow tasks](docs/images/DCOS-Airflow-Tasks.jpg)
 
-4. Install an external load balancer to access the Airflow Web console.
+# 5. Install an external load balancer to access the Airflow Web console.
 
 The package is designed to run the Airflow tasks on the private agent nodes which normally are not accessable by users and applications from outside of the DC/OS cluster. In order to access the Apache Airflow Web console, you will need run run an extnerally facing load balancer running on your public agent node. 
 
@@ -118,14 +118,14 @@ If you are using the Open Source version of DC/OS, you should install the Repoxy
 
 For using Reproxy with this DC/OS Airflow package, use these instructions:
 
-     # Find out what HTTP port the Airflow Webserver process is using
+     Find out what HTTP port the Airflow Webserver process is using
      $ http_port=$(dcos task log airflow-webserver-0 stdout --lines=200 | grep Host: | cut -d ':' -f 3) \
        && echo $http_port
 
-     # Modify the reproxy Marathon json to proxy that port
+     Modify the reproxy Marathon json to proxy that port
      $ sed "s/1025/${http_port}/" reproxy/airflow-reproxy-marathon.json > /tmp/airflow-reproxy-marathon.json
 
-     # Use the DC/OS command line interface or CLI to start Reproxy using Marthon.
+     Use the DC/OS command line interface or CLI to start Reproxy using Marthon.
      $ dcos marathon app add /tmp/airflow-reproxy-marathon.json
 
      $ dcos task log airflow-reproxy | grep 'Airflow Webserver'
@@ -135,7 +135,7 @@ For using Reproxy with this DC/OS Airflow package, use these instructions:
 
           Airflow Webserver: 34.208.88.58:23338/airflow
 
-5. Launch an example DAG job.
+# 6. Launch an example DAG job.
 
 Use the DC/OS Job scheduler to run an example Airflow job. 
 
@@ -145,7 +145,7 @@ Use the DC/OS Job scheduler to run an example Airflow job.
 
 Once the example DAG job is running, you can view the progress on the Airflow Web console by clicking on the "tutorial" DAG listed on the "DAGs" page.
 
-9. Reset the Airflow database.
+# 7. Reset the Airflow database.
 
 You can optionally reset the Airflow Postgres database schema (erasing all previous data) by running this DC/OS job:
 
