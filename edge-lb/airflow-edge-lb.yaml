@@ -1,0 +1,20 @@
+---
+pools:
+  - name: airflow-webserver-pool 
+    count: 1
+    haproxy:
+      frontends:
+        - bindPort: 10460 
+          protocol: HTTP
+          linkBackend:
+            defaultBackend: airflow-webserver-0-server
+      backends:
+        - name: airflow-webserver-0-server
+          protocol: HTTP
+          servers:
+            - framework:
+                value: airflow
+              task:
+                value: airflow-webserver-0-server
+              port:
+                name: webserver-http-port

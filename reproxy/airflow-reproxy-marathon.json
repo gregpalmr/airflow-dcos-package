@@ -1,0 +1,49 @@
+{
+  "id": "/airflow-reproxy",
+  "cpus": 1,
+  "acceptedResourceRoles": [
+      "slave_public"
+  ],
+  "instances": 1,
+  "acceptedResourceRoles":["slave_public"],
+  "mem": 512,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "mesosphere/repoxy:2.0.0"
+    },
+    "volumes": [
+      {
+        "containerPath": "/opt/mesosphere",
+        "hostPath": "/opt/mesosphere",
+        "mode": "RO"
+      }
+    ]
+  },
+  "cmd": "/proxyfiles/bin/start airflow $PORT0",
+  "portDefinitions": [
+    {
+      "port": 0,
+      "protocol": "tcp"
+    },
+    {
+      "port": 0,
+      "protocol": "tcp"
+    }
+  ],
+  "healthChecks": [
+    {
+      "gracePeriodSeconds": 300,
+      "intervalSeconds": 60,
+      "timeoutSeconds": 20,
+      "maxConsecutiveFailures": 3,
+      "portIndex": 0,
+      "path": "/airflow",
+      "protocol": "MESOS_HTTP",
+      "delaySeconds": 15
+    }
+  ],
+  "env": {
+    "PROXY_ENDPOINT_0": "Airflow Webserver,http,airflow-webserver-0-server,mesos,1025,/airflow,/"
+  }
+}
