@@ -96,7 +96,7 @@ When the build process is complete, you will see a message like this:
 
 ![DC/OS Catalog Airflow Package Installer](/docs/images/Airflow-Catalog.jpg?raw=true)
 
-    Wait a few minutes and you will see the various Airflow tasks startup. If you use the DC/OS Dashboard's Service panel to view the airflow application group, you will see the tasks startup. Click on the ALL option to see the tasks that have completed too.
+Wait a few minutes and you will see the various Airflow tasks startup. If you use the DC/OS Dashboard's Service panel to view the airflow application group, you will see the tasks startup. Click on the ALL option to see the tasks that have completed too.
 
 ![DC/OS Airflow tasks](/docs/images/DCOS-Airflow-Tasks.jpg)
 
