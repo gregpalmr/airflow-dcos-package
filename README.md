@@ -13,7 +13,7 @@ Contents:
 
 ``USAGE``
 
-### 1. Clone this repo on your client computer
+### 1. Clone this repo on your client computer.
 
      $ git clone https://github.com/gregpalmr/airflow-dcos-package
 
