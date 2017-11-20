@@ -1,0 +1,15 @@
+{
+  "packagingVersion": "4.0",
+  "upgradesFrom": ["{{upgrades-from}}"],
+  "downgradesTo": ["{{downgrades-to}}"],
+  "minDcosReleaseVersion": "1.10",
+  "name": "airflow",
+  "version": "1.8.0-1.0.1",
+  "maintainer": "greg.palmer@mesosphere.com",
+  "description": "Apache Airflow DAG Scheduler running  on DC/OS",
+  "selected": false,
+  "framework": true,
+  "tags": ["airflow"],
+  "postInstallNotes": "Apache Airflow on DC/OS is being installed!\n\n\tDocumentation: https://github.com/gregpalmr/airflow-dcos-package\n\tIssues: https://github.com/gregpalmr/airflow-dcos-package/issues",
+  "postUninstallNotes": "Apache Airflow on DC/OS is being uninstalled."
+}

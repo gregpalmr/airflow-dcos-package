@@ -1,0 +1,219 @@
+{
+  "type": "object",
+    "properties": {
+      "service": {
+        "type": "object",
+        "description": "DC/OS service configuration properties",
+        "properties": {
+          "name": {
+            "title": "Service name",
+            "description": "The name of the service instance",
+            "type": "string",
+            "default": "airflow"
+          },
+          "user": {
+            "title": "User",
+            "description": "The user that the service will run as.",
+            "type": "string",
+            "default": "root"
+          },
+          "service_account": {
+            "description": "The service account for DC/OS service authentication. This is typically left empty to use the default unless service authentication is needed. The value given here is passed as the principal of Mesos framework.",
+            "type": "string",
+            "default": ""
+          },
+          "service_account_secret": {
+            "title": "Credential secret name (optional)",
+            "description": "Name of the Secret Store credentials to use for DC/OS service authentication. This should be left empty unless service authentication is needed.",
+            "type": "string",
+            "default": ""
+          },
+          "log_level": {
+            "description": "The log level for the DC/OS service.",
+            "type": "string",
+            "enum": ["OFF", "FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL"],
+            "default": "INFO"
+          }
+        },
+        "required":[
+          "name",
+          "user"
+        ]
+      },
+
+      "dag-scheduler": {
+        "description": "Airflow DAG scheduler configuration properties",
+        "type": "object",
+        "properties": {
+          "cpus": {
+            "title": "CPU count",
+            "description": "Number of CPUs to allocate to the Airflow DAG Scheduler process",
+            "type": "number",
+            "default":1.0
+          },
+          "mem": {
+            "title": "Memory size (MB)",
+            "description": "Amount of Memory to allocate to the Airflow DAG Scheduler process (in MB)",
+            "type": "integer",
+            "default":1024
+          },
+          "disk": {
+            "title": "Disk size (MB)",
+            "description": "Amount of disk space to reserve for the Airflow DAG Scheduler process (in MB)",
+            "type": "integer",
+            "default": 20
+          },
+          "disk_type": {
+            "title": "Disk type [ROOT, MOUNT]",
+            "description": "Mount volumes require preconfiguration in DC/OS",
+            "enum": [
+              "ROOT",
+              "MOUNT"
+            ],
+            "default": "ROOT"
+          },
+          "docker_image": {
+            "title": "Airflow Scheduler Docker Image",
+            "description": "Airflow Scheduler Docker Image (defaults to dockerhub.com)",
+            "type": "string",
+            "default": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
+          },
+          "parallelism": {
+            "title": "Task Parallelism",
+            "description": "The amount of parallelism as a setting to the executor. This defines the max number of task instances that should run simultaneously on this airflow installation",
+            "type": "integer",
+            "default": 32
+          },
+          "dag_concurrency": {
+            "title": "DAG Concurrency",
+            "description": "The number of task instances allowed to run concurrently by the scheduler",
+            "type": "integer",
+            "default": 16
+          },
+          "max_active_runs_per_dag": {
+            "title": "Maximum Active Runs per Dag",
+            "description": "The maximum number of active DAG runs per DAG",
+            "type": "integer",
+            "default": 16
+          },
+          "use_docker_container": {
+            "title": "Use a docker container to run DAG tasks",
+            "description": "True of you want to launch your DAG tasks in a docker container (no need to have Airflow loaded on worker nodes)",
+            "type": "boolean",
+            "default": true
+          },
+          "default_docker_container_image": {
+            "title": "Your Airflow Tasks Docker Container",
+            "description": "The name of the docker image to use when running your DAG tasks",
+            "type": "string",
+            "default": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
+          }
+        },
+        "required":[
+          "cpus",
+          "mem",
+          "disk",
+          "disk_type",
+          "docker_image"
+        ]
+      },
+      "webserver": {
+        "description": "Airflow Webserver configuration properties",
+        "type": "object",
+        "properties": {
+          "cpus": {
+            "title": "CPU count",
+            "description": "Number of CPUs to allocate to the Airflow Webserver process",
+            "type": "number",
+            "default":1.0
+          },
+          "mem": {
+            "title": "Memory size (MB)",
+            "description": "Amount of Memory to allocate to the Airflow Webserver process (in MB)",
+            "type": "integer",
+            "default":1024
+          },
+          "disk": {
+            "title": "Disk size (MB)",
+            "description": "Amount of disk space to reserve for the Airflow Webserver process (in MB)",
+            "type": "integer",
+            "default": 20
+          },
+          "disk_type": {
+            "title": "Disk type [ROOT, MOUNT]",
+            "description": "Mount volumes require preconfiguration in DC/OS",
+            "enum": [
+              "ROOT",
+              "MOUNT"
+            ],
+            "default": "ROOT"
+          }
+        },
+        "required":[
+          "cpus",
+          "mem",
+          "disk",
+          "disk_type"
+        ]
+      },
+      "postgresql": {
+        "description": "Airflow PostgreSQL configuration properties",
+        "type": "object",
+        "properties": {
+          "cpus": {
+            "title": "CPU count",
+            "description": "Number of CPUs to allocate to the Postgres database",
+            "type": "number",
+            "default":1.0
+          },
+          "mem": {
+            "title": "Memory size (MB)",
+            "description": "Amount of Memory to allocate to the Postgres database (in MB)",
+            "type": "integer",
+            "default":1024
+          },
+          "disk": {
+            "title": "Disk size (MB)",
+            "description": "Amount of disk space to reserve for the Postgres database (in MB)",
+            "type": "integer",
+            "default": 50
+          },
+          "disk_type": {
+            "title": "Disk type [ROOT, MOUNT]",
+            "description": "Mount volumes require preconfiguration in DC/OS",
+            "enum": [
+              "ROOT",
+              "MOUNT"
+            ],
+            "default": "ROOT"
+        },
+        "docker_image": {
+            "title": "PostgreSQL Docker Image",
+            "description": "PostgreSQL Docker Image (defaults to dockerhub.com)",
+            "type": "string",
+            "default": "postgres:9.6"
+        },
+        "user_id": {
+            "title": "Database User",
+            "description": "PostgreSQL database user",
+            "type": "string",
+            "default": "airflow"
+        },
+        "password": {
+            "title": "Database User Password",
+            "description": "PostgreSQL database user password",
+            "type": "string",
+            "default": "changeme"
+        }
+        },
+        "required":[
+          "cpus",
+          "mem",
+          "disk",
+          "disk_type",
+          "user_id",
+          "password"
+        ]
+      }
+    }
+}

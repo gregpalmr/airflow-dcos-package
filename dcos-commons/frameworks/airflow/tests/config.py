@@ -1,0 +1,4 @@
+PACKAGE_NAME = 'airflow'
+SERVICE_NAME = 'airflow'
+DEFAULT_TASK_COUNT = 1
+

@@ -1,0 +1,602 @@
+êINFO  2017-11-20 13:32:21,822 [Test worker] com.mesosphere.sdk.specification.yaml.RawServiceSpec$Builder:build(70): Rendered ServiceSpec from /Users/greg/src/airflow-dcos-package/dcos-commons/frameworks/airflow/src/main/dist/svc.yml:
+sMissing template values: [DB_USER_PASSWORD@L43, DB_USER_PASSWORD@L70, DB_USER_PASSWORD@L88, DB_USER_PASSWORD@L124]
+name: airflow
+scheduler:
+  principal: 
+pods:
+  airflow-postgresql:
+    count: 1
+    image: postgres:9.6
+    user: root
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      server:
+        goal: RUNNING
+        cpus: 1.0
+        memory: 1024
+>        cmd: "echo Postgres && docker-entrypoint.sh postgres"
+        volume:
+"          path: "postgresql_data"
+          type: ROOT
+          size: 50
+        ports:
+            dbport:
+                port: 0
+1                env-key: AIRFLOW_POSTGRESQL_PORT
+                 advertise: true
+                vip:
+/                    prefix: airflow-postgresql
+                    port: 5432
+        health-check:
+          cmd: "echo 0"
+          grace-period: 360
+          interval: 60
+&          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
+        env:
+&          "FRAMEWORK_NAME": "airflow"
+&          "POSTGRES_DB": "airflow-db"
+&          "POSTGRES_PGDATA": "pgdata"
+#          "POSTGRES_USER": airflow
+           "POSTGRES_PASSWORD": 
+
+  airflow-dag-scheduler:
+    count: 1
+A    image: gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
+    user: root
+    resource-sets:
+      scheduler-resources:
+        cpus: 1.0
+        memory: 1024
+        volume:
+#          path: "scheduler_volume"
+          type: ROOT
+          size: 20
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      initdb:
+        goal: FINISHED
+@        cmd: "echo Init-DB && /usr/local/airflow/bin/initdb.sh"
+*        resource-set: scheduler-resources
+        env:
+&          "FRAMEWORK_NAME": "airflow"
+/          "AIRFLOW_HOME": "/usr/local/airflow"
+#          "POSTGRES_USER": airflow
+           "POSTGRES_PASSWORD": 
+)          "USE_DOCKER_CONTAINER": "true"
+d          "DEFAULT_DOCKER_CONTAINER_IMAGE": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
+      server:
+        goal: RUNNING
+K        cmd: "echo Scheduler && /usr/local/airflow/bin/start-scheduler.sh"
+*        resource-set: scheduler-resources
+        health-check:
+          cmd: "echo 0"
+          grace-period: 360
+          interval: 60
+&          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
+        env:
+&          "FRAMEWORK_NAME": "airflow"
+/          "AIRFLOW_HOME": "/usr/local/airflow"
+#          "POSTGRES_USER": airflow
+           "POSTGRES_PASSWORD": 
+          "PARALLELISM": 32
+           "DAG_CONCURRENCY": 16
+(          "MAX_ACTIVE_RUNS_PER_DAG": 16
+'          "USE_DOCKER_CONTAINER": true
+b          "DEFAULT_DOCKER_CONTAINER_IMAGE": gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
+  airflow-webserver:
+    count: 1
+A    image: gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
+    user: root
+    resource-sets:
+      webserver-resources:
+        cpus: 1.0
+        memory: 1024
+        volume:
+#          path: "webserver_volume"
+          type: ROOT
+          size: 20
+        ports:
+!            webserver-http-port:
+                port: 0
+5                env-key: AIRFLOW_WEBSERVER_HTTP_PORT
+                 advertise: true
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      server:
+        goal: RUNNING
+K        cmd: "echo Webserver && /usr/local/airflow/bin/start-webserver.sh"
+*        resource-set: webserver-resources
+        env:
+&          "FRAMEWORK_NAME": "airflow"
+/          "AIRFLOW_HOME": "/usr/local/airflow"
+#          "POSTGRES_USER": airflow
+           "POSTGRES_PASSWORD": 
+plans:
+
+  deploy:
+    phases:
+      postgresql-deploy:
+        strategy: serial
+         pod: airflow-postgresql
+        steps:
+           - default: [[server]]
+      scheduler-deploy:
+        strategy: serial
+#        pod: airflow-dag-scheduler
+        steps:
+*          - default: [[initdb], [server]]
+      webserver-deploy:
+        strategy: serial
+        pod: airflow-webserver
+        steps:
+           - default: [[server]]
+
+
+’INFO  2017-11-20 13:32:22,148 [Test worker] org.hibernate.validator.internal.util.Version:<clinit>(30): HV000001: Hibernate Validator 5.3.2.Final
+ËINFO  2017-11-20 13:32:23,774 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getDefaultScheduler(282): Unable to retrieve last configuration. Assuming that no prior deployment has completed
+’INFO  2017-11-20 13:32:23,780 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:updateConfig(462): Updating config with 8 validators...
+“INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(78): New prospective config:
+{
+  "name" : "airflow",
+  "role" : "airflow-role",
+%  "principal" : "airflow-principal",
+  "web-url" : null,
+%  "zookeeper" : "master.mesos:2181",
+  "pod-specs" : [ {
+#    "type" : "airflow-postgresql",
+    "user" : "root",
+    "count" : 1,
+    "image" : "postgres:9.6",
+    "networks" : [ ],
+    "rlimits" : [ {
+       "name" : "RLIMIT_NOFILE",
+      "soft" : 128000,
+      "hard" : 128000
+	    } ],
+&    "uris" : [ "test-executor-uri" ],
+    "task-specs" : [ {
+      "name" : "server",
+      "goal" : "RUNNING",
+      "resource-set" : {
+&        "id" : "server-resource-set",
+(        "resource-specifications" : [ {
++          "@type" : "DefaultResourceSpec",
+          "name" : "cpus",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
++          "@type" : "DefaultResourceSpec",
+          "name" : "mem",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1024.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
+$          "@type" : "NamedVIPSpec",
+          "value" : {
+            "type" : "RANGES",
+            "scalar" : null,
+            "ranges" : {
+              "range" : [ {
+                "begin" : 0,
+                "end" : 0
+              } ]
+            },
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+-          "principal" : "airflow-principal",
+1          "env-key" : "AIRFLOW_POSTGRESQL_PORT",
+"          "port-name" : "dbport",
+          "protocol" : "tcp",
+%          "visibility" : "EXTERNAL",
+-          "vip-name" : "airflow-postgresql",
+          "vip-port" : 5432,
+!          "network-names" : [ ],
+          "name" : "ports"
+        } ],
+&        "volume-specifications" : [ {
+)          "@type" : "DefaultVolumeSpec",
+          "type" : "ROOT",
+0          "container-path" : "postgresql_data",
+          "name" : "disk",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 50.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+!        "role" : "airflow-role",
+*        "principal" : "airflow-principal"
+	      },
+      "command-spec" : {
+D        "value" : "echo Postgres && docker-entrypoint.sh postgres",
+        "environment" : {
+(          "FRAMEWORK_NAME" : "airflow",
+(          "POSTGRES_DB" : "airflow-db",
+$          "POSTGRES_PASSWORD" : "",
+(          "POSTGRES_PGDATA" : "pgdata",
+&          "POSTGRES_USER" : "airflow"
+
+        }
+	      },
+      "health-check-spec" : {
+        "command" : "echo 0",
+(        "max-consecutive-failures" : 5,
+        "delay" : 0,
+        "interval" : 60,
+        "timeout" : 10,
+        "gracePeriod" : 360
+	      },
+%      "readiness-check-spec" : null,
+      "config-files" : [ ],
+      "discovery-spec" : null,
+      "kill-grace-period" : 0,
+#      "transport-encryption" : [ ]
+	    } ],
+    "placement-rule" : null,
+    "volumes" : [ ],
+    "pre-reserved-role" : "*",
+    "secrets" : [ ],
+#    "share-pid-namespace" : false,
+!    "allow-decommission" : false
+  }, {
+&    "type" : "airflow-dag-scheduler",
+    "user" : "root",
+    "count" : 1,
+G    "image" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
+    "networks" : [ ],
+    "rlimits" : [ {
+       "name" : "RLIMIT_NOFILE",
+      "soft" : 128000,
+      "hard" : 128000
+	    } ],
+&    "uris" : [ "test-executor-uri" ],
+    "task-specs" : [ {
+      "name" : "initdb",
+      "goal" : "FINISHED",
+      "resource-set" : {
+&        "id" : "scheduler-resources",
+(        "resource-specifications" : [ {
++          "@type" : "DefaultResourceSpec",
+          "name" : "cpus",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
++          "@type" : "DefaultResourceSpec",
+          "name" : "mem",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1024.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+&        "volume-specifications" : [ {
+)          "@type" : "DefaultVolumeSpec",
+          "type" : "ROOT",
+1          "container-path" : "scheduler_volume",
+          "name" : "disk",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 20.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+!        "role" : "airflow-role",
+*        "principal" : "airflow-principal"
+	      },
+      "command-spec" : {
+F        "value" : "echo Init-DB && /usr/local/airflow/bin/initdb.sh",
+        "environment" : {
+1          "AIRFLOW_HOME" : "/usr/local/airflow",
+f          "DEFAULT_DOCKER_CONTAINER_IMAGE" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
+(          "FRAMEWORK_NAME" : "airflow",
+$          "POSTGRES_PASSWORD" : "",
+'          "POSTGRES_USER" : "airflow",
+*          "USE_DOCKER_CONTAINER" : "true"
+
+        }
+	      },
+"      "health-check-spec" : null,
+%      "readiness-check-spec" : null,
+      "config-files" : [ ],
+      "discovery-spec" : null,
+      "kill-grace-period" : 0,
+#      "transport-encryption" : [ ]
+	    }, {
+      "name" : "server",
+      "goal" : "RUNNING",
+      "resource-set" : {
+&        "id" : "scheduler-resources",
+(        "resource-specifications" : [ {
++          "@type" : "DefaultResourceSpec",
+          "name" : "cpus",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
++          "@type" : "DefaultResourceSpec",
+          "name" : "mem",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1024.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+&        "volume-specifications" : [ {
+)          "@type" : "DefaultVolumeSpec",
+          "type" : "ROOT",
+1          "container-path" : "scheduler_volume",
+          "name" : "disk",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 20.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+!        "role" : "airflow-role",
+*        "principal" : "airflow-principal"
+	      },
+      "command-spec" : {
+Q        "value" : "echo Scheduler && /usr/local/airflow/bin/start-scheduler.sh",
+        "environment" : {
+1          "AIRFLOW_HOME" : "/usr/local/airflow",
+$          "DAG_CONCURRENCY" : "16",
+f          "DEFAULT_DOCKER_CONTAINER_IMAGE" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
+(          "FRAMEWORK_NAME" : "airflow",
+,          "MAX_ACTIVE_RUNS_PER_DAG" : "16",
+           "PARALLELISM" : "32",
+$          "POSTGRES_PASSWORD" : "",
+'          "POSTGRES_USER" : "airflow",
+*          "USE_DOCKER_CONTAINER" : "true"
+
+        }
+	      },
+      "health-check-spec" : {
+        "command" : "echo 0",
+(        "max-consecutive-failures" : 5,
+        "delay" : 0,
+        "interval" : 60,
+        "timeout" : 10,
+        "gracePeriod" : 360
+	      },
+%      "readiness-check-spec" : null,
+      "config-files" : [ ],
+      "discovery-spec" : null,
+      "kill-grace-period" : 0,
+#      "transport-encryption" : [ ]
+	    } ],
+    "placement-rule" : null,
+    "volumes" : [ ],
+    "pre-reserved-role" : "*",
+    "secrets" : [ ],
+#    "share-pid-namespace" : false,
+!    "allow-decommission" : false
+  }, {
+"    "type" : "airflow-webserver",
+    "user" : "root",
+    "count" : 1,
+G    "image" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
+    "networks" : [ ],
+    "rlimits" : [ {
+       "name" : "RLIMIT_NOFILE",
+      "soft" : 128000,
+      "hard" : 128000
+	    } ],
+&    "uris" : [ "test-executor-uri" ],
+    "task-specs" : [ {
+      "name" : "server",
+      "goal" : "RUNNING",
+      "resource-set" : {
+&        "id" : "webserver-resources",
+(        "resource-specifications" : [ {
++          "@type" : "DefaultResourceSpec",
+          "name" : "cpus",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
++          "@type" : "DefaultResourceSpec",
+          "name" : "mem",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 1024.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        }, {
+           "@type" : "PortSpec",
+          "value" : {
+            "type" : "RANGES",
+            "scalar" : null,
+            "ranges" : {
+              "range" : [ {
+                "begin" : 0,
+                "end" : 0
+              } ]
+            },
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+-          "principal" : "airflow-principal",
+5          "env-key" : "AIRFLOW_WEBSERVER_HTTP_PORT",
+/          "port-name" : "webserver-http-port",
+%          "visibility" : "EXTERNAL",
+!          "network-names" : [ ],
+          "name" : "ports"
+        } ],
+&        "volume-specifications" : [ {
+)          "@type" : "DefaultVolumeSpec",
+          "type" : "ROOT",
+1          "container-path" : "webserver_volume",
+          "name" : "disk",
+          "value" : {
+            "type" : "SCALAR",
+            "scalar" : {
+              "value" : 20.0
+            },
+            "ranges" : null,
+            "set" : null,
+            "text" : null
+          },
+#          "role" : "airflow-role",
+%          "pre-reserved-role" : "*",
+,          "principal" : "airflow-principal"
+        } ],
+!        "role" : "airflow-role",
+*        "principal" : "airflow-principal"
+	      },
+      "command-spec" : {
+Q        "value" : "echo Webserver && /usr/local/airflow/bin/start-webserver.sh",
+        "environment" : {
+1          "AIRFLOW_HOME" : "/usr/local/airflow",
+(          "FRAMEWORK_NAME" : "airflow",
+$          "POSTGRES_PASSWORD" : "",
+&          "POSTGRES_USER" : "airflow"
+
+        }
+	      },
+"      "health-check-spec" : null,
+%      "readiness-check-spec" : null,
+      "config-files" : [ ],
+      "discovery-spec" : null,
+      "kill-grace-period" : 0,
+#      "transport-encryption" : [ ]
+	    } ],
+    "placement-rule" : null,
+    "volumes" : [ ],
+    "pre-reserved-role" : "*",
+    "secrets" : [ ],
+#    "share-pid-namespace" : false,
+!    "allow-decommission" : false
+  } ],
+'  "replacement-failure-policy" : null,
+  "user" : "root"
+}
+¿INFO  2017-11-20 13:32:23,805 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(88): Skipping config diff: There is no old config target to diff against
+ŠINFO  2017-11-20 13:32:23,811 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(126): Updating target configuration: Prior target configuration 'null' is different from new configuration 'f8e39690-92a5-4458-9dd3-024ff3a855a3'. 
+ÌINFO  2017-11-20 13:32:23,811 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(230): Testing deserialization of 1 listed configurations before cleanup:
+´INFO  2017-11-20 13:32:23,812 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(234): - f8e39690-92a5-4458-9dd3-024ff3a855a3: OK
+ŸINFO  2017-11-20 13:32:23,812 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:clearConfigsNotListed(339): Cleaning up 0 unused configs: []
+²INFO  2017-11-20 13:32:23,823 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-postgresql-0, with tasks: [server]
+ÕWARN  2017-11-20 13:32:23,829 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-postgresql-0-server at: Tasks/airflow-postgresql-0-server/TaskInfo
+ÈINFO  2017-11-20 13:32:23,835 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+ÈINFO  2017-11-20 13:32:23,836 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+µINFO  2017-11-20 13:32:23,840 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-dag-scheduler-0, with tasks: [initdb]
+ÛWARN  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-dag-scheduler-0-initdb at: Tasks/airflow-dag-scheduler-0-initdb/TaskInfo
+ËINFO  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
+ËINFO  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
+µINFO  2017-11-20 13:32:23,842 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-dag-scheduler-0, with tasks: [server]
+ÛWARN  2017-11-20 13:32:23,843 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-dag-scheduler-0-server at: Tasks/airflow-dag-scheduler-0-server/TaskInfo
+ËINFO  2017-11-20 13:32:23,843 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+ËINFO  2017-11-20 13:32:23,844 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+±INFO  2017-11-20 13:32:23,844 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-webserver-0, with tasks: [server]
+ÓWARN  2017-11-20 13:32:23,845 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-webserver-0-server at: Tasks/airflow-webserver-0-server/TaskInfo
+ÇINFO  2017-11-20 13:32:23,845 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-webserver-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+ÇINFO  2017-11-20 13:32:23,846 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-webserver-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+ƒINFO  2017-11-20 13:32:23,848 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getPlans(376): Got 1 YAML plan: [deploy]
+ÑINFO  2017-11-20 13:32:23,849 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:selectDeployPlan(425): Using regular deploy plan. (Has completed deployment: false, Custom update plan defined: false)

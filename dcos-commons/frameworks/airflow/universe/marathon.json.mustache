@@ -1,0 +1,96 @@
+{
+  "id": "{{service.name}}",
+  "cpus": 1.0,
+  "mem": 1024,
+  "instances": 1,
+  "user": "{{service.user}}",
+  "cmd": "export LD_LIBRARY_PATH=$MESOS_SANDBOX/libmesos-bundle/lib:$LD_LIBRARY_PATH; export MESOS_NATIVE_JAVA_LIBRARY=$(ls $MESOS_SANDBOX/libmesos-bundle/lib/libmesos-*.so); export JAVA_HOME=$(ls -d $MESOS_SANDBOX/jre*/); export JAVA_HOME=${JAVA_HOME%/}; export PATH=$(ls -d $JAVA_HOME/bin):$PATH && export JAVA_OPTS=\"-Xms256M -Xmx512M -XX:-HeapDumpOnOutOfMemoryError\" && ./bootstrap -resolve=false -template=false && ./airflow-scheduler/bin/airflow ./airflow-scheduler/svc.yml",
+  "labels": {
+    "DCOS_COMMONS_API_VERSION": "v1",
+    "DCOS_COMMONS_UNINSTALL": "true",
+    "DCOS_PACKAGE_FRAMEWORK_NAME": "{{service.name}}",
+    "MARATHON_SINGLE_INSTANCE_APP": "true",
+    "DCOS_SERVICE_NAME": "{{service.name}}",
+    "DCOS_SERVICE_PORT_INDEX": "0",
+    "DCOS_SERVICE_SCHEME": "http"
+  },
+  "env": {
+    "PACKAGE_NAME": "{{package-name}}",
+    "PACKAGE_VERSION": "{{package-version}}",
+    "PACKAGE_BUILD_TIME_EPOCH_MS": "{{package-build-time-epoch-ms}}",
+    "PACKAGE_BUILD_TIME_STR": "{{package-build-time-str}}",
+
+    "FRAMEWORK_NAME": "{{service.name}}",
+    "FRAMEWORK_LOG_LEVEL": "{{service.log_level}}",
+    "SERVICE_PRINCIPAL": "{{service.service_account}}",
+    "SERVICE_USER": "{{service.user}}",
+
+    "DB_CPUS": "{{postgresql.cpus}}",
+    "DB_MEM": "{{postgresql.mem}}",
+    "DB_DISK_SIZE": "{{postgresql.disk}}",
+    "DB_DISK_TYPE": "{{postgresql.disk_type}}",
+    "POSTGRES_DOCKER_IMAGE": "{{postgresql.docker_image}}",
+    "DB_USER": "{{postgresql.user_id}}",
+    "DB_PASSWORD": "{{postgresql.password}}",
+    
+    "SCHEDULER_CPUS": "{{dag-scheduler.cpus}}",
+    "SCHEDULER_MEM": "{{dag-scheduler.mem}}",
+    "SCHEDULER_DISK_SIZE": "{{dag-scheduler.disk}}",
+    "SCHEDULER_DISK_TYPE": "{{dag-scheduler.disk_type}}",
+    "AIRFLOW_SCHEDULER_DOCKER_IMAGE": "{{dag-scheduler.docker_image}}",
+    "PARALLELISM": "{{dag-scheduler.parallelism}}",
+    "DAG_CONCURRENCY": "{{dag-scheduler.dag_concurrency}}",
+    "MAX_ACTIVE_RUNS_PER_DAG": "{{dag-scheduler.max_active_runs_per_dag}}",
+    "USE_DOCKER_CONTAINER": "{{dag-scheduler.use_docker_container}}",
+    "DEFAULT_DOCKER_CONTAINER_IMAGE": "{{dag-scheduler.default_docker_container_image}}",
+
+    "WEBSERVER_CPUS": "{{webserver.cpus}}",
+    "WEBSERVER_MEM": "{{webserver.mem}}",
+    "WEBSERVER_DISK_SIZE": "{{webserver.disk}}",
+    "WEBSERVER_DISK_TYPE": "{{webserver.disk_type}}",
+
+    "JAVA_URI": "{{resource.assets.uris.jre-tar-gz}}",
+    "EXECUTOR_URI": "{{resource.assets.uris.executor-zip}}",
+    "BOOTSTRAP_URI": "{{resource.assets.uris.bootstrap-zip}}",
+    
+    "LIBMESOS_URI": "{{resource.assets.uris.libmesos-bundle-tar-gz}}"
+  },
+  "uris": [
+    "{{resource.assets.uris.bootstrap-zip}}",
+    "{{resource.assets.uris.jre-tar-gz}}",
+    "{{resource.assets.uris.scheduler-zip}}",
+    "{{resource.assets.uris.libmesos-bundle-tar-gz}}"
+  ],
+  "upgradeStrategy":{
+    "minimumHealthCapacity": 0,
+    "maximumOverCapacity": 0
+  },
+  "healthChecks": [
+    {
+      "protocol": "HTTP",
+      "path": "/v1/plans/deploy",
+      "gracePeriodSeconds": 900,
+      "intervalSeconds": 30,
+      "portIndex": 0,
+      "timeoutSeconds": 30,
+      "maxConsecutiveFailures": 0
+    },
+    {
+      "protocol": "HTTP",
+      "path": "/v1/plans/recovery",
+      "gracePeriodSeconds": 900,
+      "intervalSeconds": 30,
+      "portIndex": 0,
+      "timeoutSeconds": 30,
+      "maxConsecutiveFailures": 0
+    }
+  ],
+  "portDefinitions": [
+    {
+      "port": 0,
+      "protocol": "tcp",
+      "name": "api",
+      "labels": { "VIP_0": "/api.{{service.name}}:80" }
+    }
+  ]
+}

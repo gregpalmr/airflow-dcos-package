@@ -1,0 +1,143 @@
+name: {{FRAMEWORK_NAME}}
+scheduler:
+  principal: {{SERVICE_PRINCIPAL}}
+pods:
+  {{FRAMEWORK_NAME}}-postgresql:
+    count: 1
+    image: {{POSTGRES_DOCKER_IMAGE}}
+    user: {{SERVICE_USER}}
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      server:
+        goal: RUNNING
+        cpus: {{DB_CPUS}}
+        memory: {{DB_MEM}}
+        cmd: "echo Postgres && docker-entrypoint.sh postgres"
+        volume:
+          path: "postgresql_data"
+          type: {{DB_DISK_TYPE}}
+          size: {{DB_DISK_SIZE}}
+        ports:
+            dbport:
+                port: 0
+                env-key: AIRFLOW_POSTGRESQL_PORT
+                advertise: true
+                vip:
+                    prefix: airflow-postgresql
+                    port: 5432
+        health-check:
+          cmd: "echo 0"
+          grace-period: 360
+          interval: 60
+          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
+        env:
+          "FRAMEWORK_NAME": "{{FRAMEWORK_NAME}}"
+          "POSTGRES_DB": "airflow-db"
+          "POSTGRES_PGDATA": "pgdata"
+          "POSTGRES_USER": {{DB_USER}}
+          "POSTGRES_PASSWORD": {{DB_USER_PASSWORD}}
+
+  {{FRAMEWORK_NAME}}-dag-scheduler:
+    count: 1
+    image: {{AIRFLOW_SCHEDULER_DOCKER_IMAGE}}
+    user: {{SERVICE_USER}}
+    resource-sets:
+      scheduler-resources:
+        cpus: {{SCHEDULER_CPUS}}
+        memory: {{SCHEDULER_MEM}}
+        volume:
+          path: "scheduler_volume"
+          type: {{SCHEDULER_DISK_TYPE}}
+          size: {{SCHEDULER_DISK_SIZE}}
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      initdb:
+        goal: FINISHED
+        cmd: "echo Init-DB && /usr/local/airflow/bin/initdb.sh"
+        resource-set: scheduler-resources
+        env:
+          "FRAMEWORK_NAME": "{{FRAMEWORK_NAME}}"
+          "AIRFLOW_HOME": "/usr/local/airflow"
+          "POSTGRES_USER": {{DB_USER}}
+          "POSTGRES_PASSWORD": {{DB_USER_PASSWORD}}
+          "USE_DOCKER_CONTAINER": "{{USE_DOCKER_CONTAINER}}"
+          "DEFAULT_DOCKER_CONTAINER_IMAGE": "{{DEFAULT_DOCKER_CONTAINER_IMAGE}}"
+      server:
+        goal: RUNNING
+        cmd: "echo Scheduler && /usr/local/airflow/bin/start-scheduler.sh"
+        resource-set: scheduler-resources
+        health-check:
+          cmd: "echo 0"
+          grace-period: 360
+          interval: 60
+          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
+        env:
+          "FRAMEWORK_NAME": "{{FRAMEWORK_NAME}}"
+          "AIRFLOW_HOME": "/usr/local/airflow"
+          "POSTGRES_USER": {{DB_USER}}
+          "POSTGRES_PASSWORD": {{DB_USER_PASSWORD}}
+          "PARALLELISM": {{PARALLELISM}}
+          "DAG_CONCURRENCY": {{DAG_CONCURRENCY}}
+          "MAX_ACTIVE_RUNS_PER_DAG": {{MAX_ACTIVE_RUNS_PER_DAG}}
+          "USE_DOCKER_CONTAINER": {{USE_DOCKER_CONTAINER}}
+          "DEFAULT_DOCKER_CONTAINER_IMAGE": {{DEFAULT_DOCKER_CONTAINER_IMAGE}}
+  {{FRAMEWORK_NAME}}-webserver:
+    count: 1
+    image: {{AIRFLOW_SCHEDULER_DOCKER_IMAGE}}
+    user: {{SERVICE_USER}}
+    resource-sets:
+      webserver-resources:
+        cpus: {{WEBSERVER_CPUS}}
+        memory: {{WEBSERVER_MEM}}
+        volume:
+          path: "webserver_volume"
+          type: {{WEBSERVER_DISK_TYPE}}
+          size: {{WEBSERVER_DISK_SIZE}}
+        ports:
+            webserver-http-port:
+                port: 0
+                env-key: AIRFLOW_WEBSERVER_HTTP_PORT
+                advertise: true
+    rlimits:
+      RLIMIT_NOFILE:
+        soft: 128000
+        hard: 128000
+    tasks:
+      server:
+        goal: RUNNING
+        cmd: "echo Webserver && /usr/local/airflow/bin/start-webserver.sh"
+        resource-set: webserver-resources
+        env:
+          "FRAMEWORK_NAME": "{{FRAMEWORK_NAME}}"
+          "AIRFLOW_HOME": "/usr/local/airflow"
+          "POSTGRES_USER": {{DB_USER}}
+          "POSTGRES_PASSWORD": {{DB_USER_PASSWORD}}
+plans:
+  deploy:
+    phases:
+      postgresql-deploy:
+        strategy: serial
+        pod: {{FRAMEWORK_NAME}}-postgresql
+        steps:
+          - default: [[server]]
+      scheduler-deploy:
+        strategy: serial
+        pod: {{FRAMEWORK_NAME}}-dag-scheduler
+        steps:
+          - default: [[initdb], [server]]
+      webserver-deploy:
+        strategy: serial
+        pod: {{FRAMEWORK_NAME}}-webserver
+        steps:
+          - default: [[server]]
+
