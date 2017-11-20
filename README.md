@@ -23,8 +23,11 @@ Contents:
 
 To launch an appropriate sized DC/OS cluster, please refere to the following documentation:
 
-     [DC/OS Sysetm Requirements!](https://docs.mesosphere.com/1.10/installing/custom/system-requirements)
-     [DC/OS Installation!](https://docs.mesosphere.com/1.10/installing)
+     DC/OS System Requirements:
+          https://docs.mesosphere.com/1.10/installing/custom/system-requirements
+
+     DC/OS Installation:
+           https://docs.mesosphere.com/1.10/installing
 
 
 # 3. Build the Airflow DC/OS Package using the Mesosphere SDK.
