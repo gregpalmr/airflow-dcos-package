@@ -73,6 +73,24 @@ When the build process is complete, you will see a message like this:
     dcos package repo add --index=0 airflow-aws https://universe-converter.mesosphere.com/transform?url=https://YOUR-S3-BUCKET.s3.amazonaws.com/dcos_catalog/airflow/HASH-VALUE/stub-universe-airflow.json
     dcos package install --yes airflow
 
+4. Install the newly built DC/OS package repo and launch the Airflow package.
+
+    # Uninstall any previous Airflow package repo (Catalog)
+    $ dcos package repo remove airflow-aws
+
+    # Install the newly built Airflow package repo (Catalog)
+    $ dcos package repo add --index=0 airflow-aws https://universe-converter.mesosphere.com/transform?url=https://YOUR-S3-BUCKET.s3.amazonaws.com/dcos_catalog/airflow/HASH-VALUE/stub-universe-airflow.json
+
+    # Install the Airflow Catalog
+    $ dcos package install --yes airflow
+
+    Or use the DC/OS Dashboard's Catalog panel to install the Airflow service:
+
+    ![DC/OS Catalog Airflow Package Installer](docs/images/Airflow-Catalog.jpg)
+
+    Wait a few minutes and you will see the various Airflow tasks startup. If you use the DC/OS Dashboard's Service panel to view the airflow application group, you will see the tasks startup. Click on the ALL option to see the tasks that have completed too.
+
+    ![DC/OS Airflow tasks](docs/images/DCOS-Airflow-Tasks.jpg)
 
 4. Install an external load balancer to access the Airflow Web console.
 
