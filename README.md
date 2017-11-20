@@ -145,13 +145,28 @@ For using Reproxy with this DC/OS Airflow package, use these instructions:
 
 ### 6. Launch an example DAG job.
 
-Use the DC/OS Job scheduler to run an example Airflow job. 
+Use the DC/OS Job scheduler to run an example Airflow job. Use the following DC/OS CLI commands:
 
     $ dcos job add jobs/airflow-submit-tutorial-dag-job.json
 
     $ dcos job run airflow-submit-tutorial-dag-job
 
 Once the example DAG job is running, you can view the progress on the Airflow Web console by clicking on the "tutorial" DAG listed on the "DAGs" page.
+
+![DC/OS Airflow Tutorial job](/docs/images/Airflow-Tutorial-Job.jpg)
+
+After a few minutes, you will see some of the DAG scheduled tasks begin to run.
+
+![DC/OS Airflow Tutorial job started](/docs/images/Airflow-Tutorial-Started.jpg)
+
+After a few more minutes, you will see some of the DAG scheduled tasks begin to complete.
+
+![DC/OS Airflow Tutorial job running](/docs/images/Airflow-Tutorial-Running.jpg)
+
+After a long time, you will see all the tasks completed.
+
+![DC/OS Airflow Tutorial job completed](/docs/images/Airflow-Tutorial-Completed.jpg)
+
 
 ### 7. Reset the Airflow database.
 
