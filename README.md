@@ -21,6 +21,12 @@ Contents:
 
 # 2. Launch a DC/OS cluster with at least 3 private agent nodes and 1 public agent node.
 
+To launch an appropriate sized DC/OS cluster, please refere to the following documentation:
+
+     https://docs.mesosphere.com/1.10/installing/custom/system-requirements/
+     https://docs.mesosphere.com/1.10/installing/
+
+
 # 3. Build the Airflow DC/OS Package using the Mesosphere SDK.
 
 Mesosphere's DC/OS SDK is a collection of tools, libraries, and documentation for easy integration and automation of stateful services, such as databases, message brokers, and caching services. The SDK is used to build a turn-key package that installs all of the tasks needed to support the Apache Airflow DAG Scheduler running on DC/OS. 
