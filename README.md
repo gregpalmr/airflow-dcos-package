@@ -6,9 +6,10 @@ This project contains a DC/OS Service created using Mesosphere's Service SDK (se
 Contents:
 
      dcos-commons                          - The Mesosphere Service SDK project for building the Airflow Package
-     reproxy/airflow-reproxy-marathon.json - DC/OS Marathon JSON to run the Reproxy load balancer
+     eldge-lb                                  - The Edge-LB load balancer setup file (Enterprise DC/OS only)
      jobs/airflow-resetdb-job.json			-  DC/OS Job to run the Airflow "resetdb" process
      jobs/airflow-submit-tutorial-dag-job.json	- DC/OS Job to run an example DAG job
+     reproxy/airflow-reproxy-marathon.json - DC/OS Marathon JSON to run the Reproxy load balancer
 
 ``USAGE``
 
@@ -44,7 +45,10 @@ The SDK automates the launching of the following tasks in the correct order and 
 
 This implementation of the Airflow package using the DC/OS SDK is implemented with YAML and JSON files with a small Java program used for automated testing. While this specification is far from complete, it provides a good example of how to use the DC/OS SDK to build a single-click installable package. The source files that were customized are listed here:
 
-     - xxx
+     - src/main/dist/svc.yml - The SDK specification for the tasks to be started as part of the Airflow service
+     - universe/marathon.json.mustache - The SDK specification for the JSON template for use with Marathon
+     - universe/config.json - The SDK specification for the configuration variables to be prompted for when launcing the Airflow service
+     - src/test/java/com/mesosphere/sdk/airflow/scheduler/ServiceTest.java - The SDK test class for use when building the package
 
 To build the Airflow package using the SDK, follow these instructions:
 
