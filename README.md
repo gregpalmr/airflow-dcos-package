@@ -177,3 +177,10 @@ You can optionally reset the Airflow Postgres database schema (erasing all previ
      $ dcos job run airflow-resetdb-job
 
 
+## TODO:
+
+- Replace PostgreSQL with a highly available database like CockroachDB. Not sure if Airflow's SQLAchemy supports CDB.
+- Add tunables for selecting CPU and Memory sizes per DAG job. Currently it is specific in the airflow.cfg file for all jobs.
+- Add a DC/OS CLI command line interface to the service.
+- Add deployment plans to the service.
+
