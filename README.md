@@ -5,11 +5,10 @@ This project contains a DC/OS Service created using Mesosphere's Service SDK (se
 
 Contents:
 
-     dcos-commons/framework/airflow            - The Mesosphere Service SDK project for building the Airflow Package
-     eldge-lb                                  - The Edge-LB load balancer setup file (Enterprise DC/OS only)
-     jobs/airflow-resetdb-job.json             -  DC/OS Job to run the Airflow "resetdb" process
-     jobs/airflow-submit-tutorial-dag-job.json - DC/OS Job to run an example DAG job
-     reproxy/airflow-reproxy-marathon.json     - DC/OS Marathon JSON to run the Reproxy load balancer
+     dcos-commons/framework/airflow     - The Mesosphere Service SDK project for building the Airflow Package
+     eldge-lb                           - The Edge-LB load balancer setup file (Enterprise DC/OS only)
+     jobs                               - DC/OS Job JSON files to run example Airflow DAG jobs 
+     reproxy                            - DC/OS Marathon JSON file to run the Reproxy load balancer
 
 ``USAGE``
 
