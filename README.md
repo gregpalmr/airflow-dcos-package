@@ -151,7 +151,11 @@ Use the DC/OS Job scheduler to run an example Airflow job. Use the following DC/
 
     $ dcos job run airflow-submit-tutorial-dag-job
 
-Once the example DAG job is running, you can view the progress on the Airflow Web console by clicking on the "tutorial" DAG listed on the "DAGs" page.
+Once the example DAG job is running, you can view the DAG tasks being launched as Mesos tasks using the DC/OS Dashboard Service panel. Click on the Services menu option on the left, then click on the airflow service link, then click on the ALL tab, to see both running and completed tasks. The list should look something like this:
+
+![DC/OS Airflow DAG tasks](/docs/images/Airflow-DAG-Tasks-Running.jpg)
+
+You can also view the progress on the Airflow Web console by clicking on the "tutorial" DAG listed on the "DAGs" page.
 
 ![DC/OS Airflow Tutorial job](/docs/images/Airflow-Tutorial-Job.jpg)
 
