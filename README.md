@@ -89,7 +89,7 @@ When the build process is complete, you will see a message like this:
     Install the newly built Airflow package repo (Catalog)
     $ dcos package repo add --index=0 airflow-aws https://universe-converter.mesosphere.com/transform?url=https://YOUR-S3-BUCKET.s3.amazonaws.com/dcos_catalog/airflow/HASH-VALUE/stub-universe-airflow.json
 
-    Install the Airflow Catalog
+    Install the Airflow package
     $ dcos package install --yes airflow
 
     Or use the DC/OS Dashboard's Catalog panel to install the Airflow service:
