@@ -64,7 +64,7 @@ Change directory to the Airflow framework source code directory.
 
      $ cd dcos-commons/frameworks/airflow
 
-Set two environment variables that point to your Amazon S3 bucket to place the resulting package files. There is also a "web" option to build the package to be hosted by an HTTP server somewhere on your network.
+Set two environment variables that point to your Amazon S3 bucket to place the resulting package files. There is also a "local" option to build the package locally, and then to be hosted by an HTTP server somewhere on your network.
 
      $ export S3_DIR_PATH=dcos_catalog && export S3_BUCKET=YOUR-S3-BUCKET 
 
