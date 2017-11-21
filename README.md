@@ -183,4 +183,5 @@ You can optionally reset the Airflow Postgres database schema (erasing all previ
 - Add tunables for selecting CPU and Memory sizes per DAG job. Currently it is specified in the airflow.cfg file for all jobs.
 - Add a DC/OS CLI command line interface to the service.
 - Add deployment plans to the service.
+- Add a tutorial on how to modify the default docker image to include user artifacts and applications.
 
