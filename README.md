@@ -184,4 +184,5 @@ You can optionally reset the Airflow Postgres database schema (erasing all previ
 - Add a DC/OS CLI command line interface to the service.
 - Add deployment plans to the service.
 - Add a tutorial on how to modify the default docker image to include user artifacts and applications.
+- Add a tutorial on how to deploy this service in an air-gaped or offline environment.
 
