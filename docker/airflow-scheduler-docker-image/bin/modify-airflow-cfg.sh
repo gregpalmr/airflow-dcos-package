@@ -1,4 +1,6 @@
-CRIPT: modify-airflow-cfg.sh
+#!/bin/bash
+#
+# SCRIPT: modify-airflow-cfg.sh
 #
 # DESCRIPTION: Modify the airflow configuration based on environment variables
 #
@@ -24,7 +26,7 @@ cp /usr/local/airflow/airflow.cfg /usr/local/airflow/airflow.cfg.orig
 if [ "$FRAMEWORK_NAME" != "" ]
 then
      echo " modify-airflow-cfg.sh: FOUND \$FRAMEWORK_NAME = $FRAMEWORK_NAME - Modifying postresql connection string."
-     sed -i "s~FRAMEWORK_NAME~$FRAMEWORK_NAME~g" $TMP_CFG
+     sed -i "s~airflow-postgresql-0-server.airflow.mesos~$FRAMEWORK_NAME-postgresql-0-server.$FRAMEWORK_NAME.mesos~g" $TMP_CFG
 else
      echo " modify-airflow-cfg.sh: NOT FOUND: \$FRAMEWORK_NAME - Not modifying postgresql connection string."
 fi
@@ -33,20 +35,21 @@ fi
 if [ "$POSTGRES_USER" != "" ] && [ "$POSTGRES_PASSWORD" != "" ]
 then
      echo " modify-airflow-cfg.sh: FOUND \$POSTGRES_USER = $POSTGRES_USER and \$POSTGRES_PASSWORD = $POSTGRES_PASSWORD - modifying postgres user and password in connection string."
-     sed -i "s~POSTGRES_USER~$POSTGRES_USER~g" $TMP_CFG
-     sed -i "s~POSTGRES_PASSWORD~$POSTGRES_PASSWORD~g" $TMP_CFG
+     sed -i "s~airflow:changeme~$POSTGRES_USER:changeme~g" $TMP_CFG
+     sed -i "s~:changeme~:$POSTGRES_PASSWORD~g" $TMP_CFG
 fi
 # If just the user id was changed...
 if [ "$POSTGRES_USER" != "" ] && [ "$POSTGRES_PASSWORD" = "" ]
 then
      echo " modify-airflow-cfg.sh: FOUND \$POSTGRES_USER = $POSTGRES_USER - modifying postgres user in connection string."
-     sed -i "s~POSTGRES_USER~$POSTGRES_USER~g" $TMP_CFG
+     sed -i "s~airflow:changeme~$POSTGRES_USER:changeme~g" $TMP_CFG
 fi
 # If just the password was changed...
 if [ "$POSTGRES_USER" = "" ] && [ "$POSTGRES_PASSWORD" != "" ]
 then
+     echo " modify-airflow-cfg.sh: FOUND \$POSTGRES_PASSWORD = $POSTGRES_PASSWORD - modifying postgres password in connection string."
      echo " modify-airflow-cfg.sh: FOUND \$POSTGRES_PASSWORD = $POSTGRES_PASSWORD"
-     sed -i "s~POSTGRES_PASSWORD~$POSTGRES_PASSWORD~g" $TMP_CFG
+     sed -i "s~:changeme~:$POSTGRES_PASSWORD~g" $TMP_CFG
 fi
 
 if [ "$DAGS_FOLDER" != "" ]
@@ -249,12 +252,18 @@ fi
 
 if [ "$USE_DOCKER_CONTAINER" != "" ]
 then
+     echo " modify-airflow-cfg.sh: FOUND \$USE_DOCKER_CONTAINER = $USE_DOCKER_CONTAINER "
      sed -i "s~use_docker_container = True~use_docker_container = $USE_DOCKER_CONTAINER~" $TMP_CFG
+else
+     echo " modify-airflow-cfg.sh: \$USE_DOCKER_CONTAINER NOT FOUND, using default: True"
 fi
 
 if [ "$DEFAULT_DOCKER_CONTAINER_IMAGE" != "" ]
 then
-     sed -i "s~default_docker_container_image = gregpalmermesosphere/airflow-dcos-dcos:latest~default_docker_container_image = $DEFAULT_DOCKER_CONTAINER_IMAGE~" $TMP_CFG
+     echo " modify-airflow-cfg.sh: FOUND \$DEFAULT_DOCKER_CONTAINER_IMAGE = $DEFAULT_DOCKER_CONTAINER_IMAGE "
+     sed -i "s~gregpalmermesosphere/airflow-dcos-package:latest~$DEFAULT_DOCKER_CONTAINER_IMAGE~" $TMP_CFG
+else
+     echo " modify-airflow-cfg.sh: \$DEFAULT_DOCKER_CONTAINER_IMAGE NOT FOUND, using default: gregpalmermesosphere/airflow-dcos-package:latest"
 fi
 
 if [ "$xxx" != "" ]
@@ -279,4 +288,3 @@ echo
 echo
 
 # End of script
-
