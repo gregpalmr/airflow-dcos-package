@@ -5,7 +5,7 @@
     "cpus": 1,
     "mem": 1024,
     "disk": 0,
-    "cmd": "AIRFLOW_HOME=/usr/local/airflow && export AIRFLOW_HOME && $AIRFLOW_HOME/bin/resetdb.sh",
+    "cmd": "export AIRFLOW_HOME=/usr/local/airflow && export FRAMEWORK_NAME=airflow && export POSTGRES_USER=airflow && export POSTGRES_PASSWORD=deleteme && export USE_DOCKER_CONTAINER=True && export DEFAULT_DOCKER_CONTAINER_IMAGE=gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1 && $AIRFLOW_HOME/bin/modify-airflow-cfg.sh && /usr/bin/airflow resetdb -y && sleep 200",
     "env": {},
     "placement": {
       "constraints": []
@@ -13,7 +13,7 @@
     "artifacts": [],
     "maxLaunchDelay": 3600,
     "docker": {
-      "image": "gregpalmermesosphere/airflow-dcos:latest"
+      "image": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
     },
     "volumes": [],
     "restart": {
