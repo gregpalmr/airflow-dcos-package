@@ -15,6 +15,8 @@
     "DCOS_SERVICE_SCHEME": "http"
   },
   "env": {
+    "MESOS_API_VERSION": "{{service.mesos_api_version}}",
+
     "PACKAGE_NAME": "{{package-name}}",
     "PACKAGE_VERSION": "{{package-version}}",
     "PACKAGE_BUILD_TIME_EPOCH_MS": "{{package-build-time-epoch-ms}}",
@@ -31,7 +33,7 @@
     "DB_DISK_TYPE": "{{postgresql.disk_type}}",
     "POSTGRES_DOCKER_IMAGE": "{{postgresql.docker_image}}",
     "DB_USER": "{{postgresql.user_id}}",
-    "DB_PASSWORD": "{{postgresql.password}}",
+    "DB_USER_PASSWORD": "{{postgresql.password}}",
     
     "SCHEDULER_CPUS": "{{dag-scheduler.cpus}}",
     "SCHEDULER_MEM": "{{dag-scheduler.mem}}",

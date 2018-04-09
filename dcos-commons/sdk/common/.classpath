@@ -38,5 +38,5 @@
 	<classpathentry sourcepath="/Users/greg/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-library/1.3/47a7ee46628ab7133129cd7cef1e92657bc275e/hamcrest-library-1.3-sources.jar" kind="lib" path="/Users/greg/.gradle/caches/modules-2/files-2.1/org.hamcrest/hamcrest-library/1.3/4785a3c21320980282f9f33d0d1264a69040538f/hamcrest-library-1.3.jar"/>
 	<classpathentry sourcepath="/Users/greg/.gradle/caches/modules-2/files-2.1/cglib/cglib-nodep/3.1/e651cbd93cb1c2155afdea6675c50e567f7ce91e/cglib-nodep-3.1-sources.jar" kind="lib" path="/Users/greg/.gradle/caches/modules-2/files-2.1/cglib/cglib-nodep/3.1/aa83efbd1aedc4f26bdf00e7ea78191483f2c9b3/cglib-nodep-3.1.jar"/>
 	<classpathentry sourcepath="/Users/greg/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/2.1/611a57d836e2c320d59f9851d4ad587f3c8472e/objenesis-2.1-sources.jar" kind="lib" path="/Users/greg/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/2.1/87c0ea803b69252868d09308b4618f766f135a96/objenesis-2.1.jar"/>
-	<classpathentry kind="lib" path="/Users/greg/src/airflow-dcos-package/dcos-commons/sdk/common/build/gen/buildconfig/classes/main" exported="true"/>
+	<classpathentry kind="lib" path="/Users/greg/demos/airflow-dcos-package/dcos-commons/sdk/common/build/gen/buildconfig/classes/main" exported="true"/>
 </classpath>

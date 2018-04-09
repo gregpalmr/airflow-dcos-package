@@ -19,6 +19,7 @@ pytest_m="sanity and not azure"
 pytest_k=""
 azure_args=""
 ssh_path="${HOME}/.ssh/ccm.pem"
+DCOS_ENTERPRISE=true
 interactive=
 
 function usage()
@@ -114,6 +115,9 @@ case $key in
     -s)
     security="strict"
     ;;
+    -o|--open)
+    DCOS_ENTERPRISE=false
+    ;;
     -p)
     ssh_path="$2"
     shift # past argument
@@ -145,7 +149,8 @@ if [ -z $interactive ]; then
         echo "Cluster not found. Create and configure one then set \$CLUSTER_URL."
         exit 1
     else
-        if [ x"$security" == x"strict" -a $CLUSTER_URL != https* ]; then
+        if [[ x"$security" == x"strict" ]] && [[ $CLUSTER_URL != https* ]]; then
+            echo $CLUSTER_URL
             echo "CLUSTER_URL must be https in strict mode"
             exit 1
         fi

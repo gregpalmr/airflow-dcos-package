@@ -1,39 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.mesosphere.sdk.airflow.scheduler.ServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2017-11-20T18:32:20" hostname="Gregorys-MacBook-Pro.local" time="3.216">
+<testsuite name="com.mesosphere.sdk.airflow.scheduler.ServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2018-04-09T13:17:53" hostname="Gregorys-MacBook-Pro.local" time="3.593">
   <properties/>
-  <testcase name="testSpec" classname="com.mesosphere.sdk.airflow.scheduler.ServiceTest" time="3.216"/>
-  <system-out><![CDATA[INFO  2017-11-20 13:32:21,822 [Test worker] com.mesosphere.sdk.specification.yaml.RawServiceSpec$Builder:build(70): Rendered ServiceSpec from /Users/greg/src/airflow-dcos-package/dcos-commons/frameworks/airflow/src/main/dist/svc.yml:
-Missing template values: [DB_USER_PASSWORD@L43, DB_USER_PASSWORD@L70, DB_USER_PASSWORD@L88, DB_USER_PASSWORD@L124]
+  <testcase name="testSpec" classname="com.mesosphere.sdk.airflow.scheduler.ServiceTest" time="3.593"/>
+  <system-out><![CDATA[INFO  2018-04-09 09:17:54,553 [Test worker] com.mesosphere.sdk.specification.yaml.RawServiceSpec$Builder:build(70): Rendered ServiceSpec from /Users/greg/demos/airflow-dcos-package/dcos-commons/frameworks/airflow/src/main/dist/svc.yml:
+Missing template values: []
 name: airflow
 scheduler:
   principal: 
+  user: root
 pods:
-  airflow-postgresql:
+  postgresql:
     count: 1
     image: postgres:9.6
-    user: root
-    rlimits:
-      RLIMIT_NOFILE:
-        soft: 128000
-        hard: 128000
-    tasks:
-      server:
-        goal: RUNNING
+    resource-sets:
+      postgresql-resources:
         cpus: 1.0
         memory: 1024
-        cmd: "echo Postgres && docker-entrypoint.sh postgres"
         volume:
           path: "postgresql_data"
           type: ROOT
           size: 50
         ports:
-            dbport:
-                port: 0
-                env-key: AIRFLOW_POSTGRESQL_PORT
-                advertise: true
-                vip:
-                    prefix: airflow-postgresql
-                    port: 5432
+          dbport:
+             port: 0
+             env-key: AIRFLOW_POSTGRESQL_PORT
+             advertise: true
+             vip:
+               prefix: airflow-postgresql
+               port: 5432
+    tasks:
+      server:
+        goal: RUNNING
+        resource-set: postgresql-resources
+        cmd: "echo Postgres && docker-entrypoint.sh postgres"
         health-check:
           cmd: "echo 0"
           grace-period: 360
@@ -45,63 +44,23 @@ pods:
           "FRAMEWORK_NAME": "airflow"
           "POSTGRES_DB": "airflow-db"
           "POSTGRES_PGDATA": "pgdata"
-          "POSTGRES_USER": airflow
-          "POSTGRES_PASSWORD": 
-
-  airflow-dag-scheduler:
+          "POSTGRES_USER": "airflow"
+          "POSTGRES_PASSWORD": "changeme"
+  server:
     count: 1
     image: gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
-    user: root
+    volume:
+      path: airflow-shared-volume
+      type: ROOT
+      size: 20
     resource-sets:
-      scheduler-resources:
+      server-resources:
         cpus: 1.0
         memory: 1024
         volume:
-          path: "scheduler_volume"
+          path: "server_volume"
           type: ROOT
           size: 20
-    rlimits:
-      RLIMIT_NOFILE:
-        soft: 128000
-        hard: 128000
-    tasks:
-      initdb:
-        goal: FINISHED
-        cmd: "echo Init-DB && /usr/local/airflow/bin/initdb.sh"
-        resource-set: scheduler-resources
-        env:
-          "FRAMEWORK_NAME": "airflow"
-          "AIRFLOW_HOME": "/usr/local/airflow"
-          "POSTGRES_USER": airflow
-          "POSTGRES_PASSWORD": 
-          "USE_DOCKER_CONTAINER": "true"
-          "DEFAULT_DOCKER_CONTAINER_IMAGE": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
-      server:
-        goal: RUNNING
-        cmd: "echo Scheduler && /usr/local/airflow/bin/start-scheduler.sh"
-        resource-set: scheduler-resources
-        health-check:
-          cmd: "echo 0"
-          grace-period: 360
-          interval: 60
-          max-consecutive-failures: 5
-          delay: 0
-          timeout: 10
-        env:
-          "FRAMEWORK_NAME": "airflow"
-          "AIRFLOW_HOME": "/usr/local/airflow"
-          "POSTGRES_USER": airflow
-          "POSTGRES_PASSWORD": 
-          "PARALLELISM": 32
-          "DAG_CONCURRENCY": 16
-          "MAX_ACTIVE_RUNS_PER_DAG": 16
-          "USE_DOCKER_CONTAINER": true
-          "DEFAULT_DOCKER_CONTAINER_IMAGE": gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
-  airflow-webserver:
-    count: 1
-    image: gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
-    user: root
-    resource-sets:
       webserver-resources:
         cpus: 1.0
         memory: 1024
@@ -114,44 +73,75 @@ pods:
                 port: 0
                 env-key: AIRFLOW_WEBSERVER_HTTP_PORT
                 advertise: true
-    rlimits:
-      RLIMIT_NOFILE:
-        soft: 128000
-        hard: 128000
     tasks:
-      server:
-        goal: RUNNING
-        cmd: "echo Webserver && /usr/local/airflow/bin/start-webserver.sh"
-        resource-set: webserver-resources
+      initdb:
+        goal: FINISHED
+        cmd: "echo Init-DB && /usr/local/airflow/bin/initdb.sh"
+        resource-set: server-resources
         env:
           "FRAMEWORK_NAME": "airflow"
           "AIRFLOW_HOME": "/usr/local/airflow"
-          "POSTGRES_USER": airflow
-          "POSTGRES_PASSWORD": 
+          "POSTGRES_USER": "airflow"
+          "POSTGRES_PASSWORD": "changeme"
+          "USE_DOCKER_CONTAINER": "true"
+          "DEFAULT_DOCKER_CONTAINER_IMAGE": "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1"
+      dag-scheduler:
+        goal: RUNNING
+        resource-set: server-resources
+        cmd: "echo '### Scheduler ###' && mkdir -p $MESOS_SANDBOX/airflow-shared-volume/airflow-dags/ && echo '### Dir: airflow-dags ###' && find / | grep airflow-dags && /usr/local/airflow/bin/start-scheduler.sh"
+        health-check:
+          cmd: "airflow list_dags"
+          grace-period: 360
+          interval: 60
+          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
+        env:
+          "FRAMEWORK_NAME": "airflow"
+          "AIRFLOW_HOME": "/usr/local/airflow"
+          "DAGS_FOLDER": "$MESOS_SANDBOX/airflow-shared-volume/airflow-dags"
+          "POSTGRES_USER": "airflow"
+          "POSTGRES_PASSWORD": "changeme"
+          "PARALLELISM": 32
+          "DAG_CONCURRENCY": 16
+          "MAX_ACTIVE_RUNS_PER_DAG": 16
+          "USE_DOCKER_CONTAINER": true
+          "DEFAULT_DOCKER_CONTAINER_IMAGE": gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1
+      webserver:
+        goal: RUNNING
+        resource-set: webserver-resources
+        cmd: "echo \"### Webserver ###\" && echo \"### FRAMEWORK_HOST: ${FRAMEWORK_HOST} ###\" && /usr/local/airflow/bin/start-webserver.sh"
+        env:
+          "FRAMEWORK_NAME": "airflow"
+          "AIRFLOW_HOME": "/usr/local/airflow"
+          "DAGS_FOLDER": "$MESOS_SANDBOX/airflow-shared-volume/airflow-dags"
+          "POSTGRES_USER": "airflow"
+          "POSTGRES_PASSWORD": "changeme"
+        health-check:
+          cmd: "curl server-0-webserver.${FRAMEWORK_HOST}:${AIRFLOW_WEBSERVER_HTTP_PORT}"
+          grace-period: 360
+          interval: 60
+          max-consecutive-failures: 5
+          delay: 0
+          timeout: 10
 plans:
   deploy:
     phases:
       postgresql-deploy:
         strategy: serial
-        pod: airflow-postgresql
+        pod: postgresql
         steps:
           - default: [[server]]
       scheduler-deploy:
         strategy: serial
-        pod: airflow-dag-scheduler
+        pod: server 
         steps:
-          - default: [[initdb], [server]]
-      webserver-deploy:
-        strategy: serial
-        pod: airflow-webserver
-        steps:
-          - default: [[server]]
+          - default: [[initdb], [dag-scheduler], [webserver]]
 
-
-INFO  2017-11-20 13:32:22,148 [Test worker] org.hibernate.validator.internal.util.Version:<clinit>(30): HV000001: Hibernate Validator 5.3.2.Final
-INFO  2017-11-20 13:32:23,774 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getDefaultScheduler(282): Unable to retrieve last configuration. Assuming that no prior deployment has completed
-INFO  2017-11-20 13:32:23,780 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:updateConfig(462): Updating config with 8 validators...
-INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(78): New prospective config:
+INFO  2018-04-09 09:17:54,939 [Test worker] org.hibernate.validator.internal.util.Version:<clinit>(30): HV000001: Hibernate Validator 5.3.2.Final
+INFO  2018-04-09 09:17:56,663 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getDefaultScheduler(263): Unable to retrieve last configuration. Assuming that no prior deployment has completed
+INFO  2018-04-09 09:17:56,804 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:updateConfig(470): Updating config with 8 validators...
+INFO  2018-04-09 09:17:56,816 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(78): New prospective config:
 {
   "name" : "airflow",
   "role" : "airflow-role",
@@ -159,22 +149,19 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
   "web-url" : null,
   "zookeeper" : "master.mesos:2181",
   "pod-specs" : [ {
-    "type" : "airflow-postgresql",
+    "type" : "postgresql",
     "user" : "root",
     "count" : 1,
     "image" : "postgres:9.6",
     "networks" : [ ],
-    "rlimits" : [ {
-      "name" : "RLIMIT_NOFILE",
-      "soft" : 128000,
-      "hard" : 128000
-    } ],
+    "rlimits" : [ ],
     "uris" : [ "test-executor-uri" ],
     "task-specs" : [ {
       "name" : "server",
       "goal" : "RUNNING",
+      "essential" : true,
       "resource-set" : {
-        "id" : "server-resource-set",
+        "id" : "postgresql-resources",
         "resource-specifications" : [ {
           "@type" : "DefaultResourceSpec",
           "name" : "cpus",
@@ -257,7 +244,7 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
         "environment" : {
           "FRAMEWORK_NAME" : "airflow",
           "POSTGRES_DB" : "airflow-db",
-          "POSTGRES_PASSWORD" : "",
+          "POSTGRES_PASSWORD" : "changeme",
           "POSTGRES_PGDATA" : "pgdata",
           "POSTGRES_USER" : "airflow"
         }
@@ -276,29 +263,28 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
       "kill-grace-period" : 0,
       "transport-encryption" : [ ]
     } ],
-    "placement-rule" : null,
+    "placement-rule" : {
+      "@type" : "IsLocalRegionRule"
+    },
     "volumes" : [ ],
     "pre-reserved-role" : "*",
     "secrets" : [ ],
     "share-pid-namespace" : false,
     "allow-decommission" : false
   }, {
-    "type" : "airflow-dag-scheduler",
+    "type" : "server",
     "user" : "root",
     "count" : 1,
     "image" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
     "networks" : [ ],
-    "rlimits" : [ {
-      "name" : "RLIMIT_NOFILE",
-      "soft" : 128000,
-      "hard" : 128000
-    } ],
+    "rlimits" : [ ],
     "uris" : [ "test-executor-uri" ],
     "task-specs" : [ {
       "name" : "initdb",
       "goal" : "FINISHED",
+      "essential" : true,
       "resource-set" : {
-        "id" : "scheduler-resources",
+        "id" : "server-resources",
         "resource-specifications" : [ {
           "@type" : "DefaultResourceSpec",
           "name" : "cpus",
@@ -333,7 +319,7 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
         "volume-specifications" : [ {
           "@type" : "DefaultVolumeSpec",
           "type" : "ROOT",
-          "container-path" : "scheduler_volume",
+          "container-path" : "server_volume",
           "name" : "disk",
           "value" : {
             "type" : "SCALAR",
@@ -357,7 +343,7 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
           "AIRFLOW_HOME" : "/usr/local/airflow",
           "DEFAULT_DOCKER_CONTAINER_IMAGE" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
           "FRAMEWORK_NAME" : "airflow",
-          "POSTGRES_PASSWORD" : "",
+          "POSTGRES_PASSWORD" : "changeme",
           "POSTGRES_USER" : "airflow",
           "USE_DOCKER_CONTAINER" : "true"
         }
@@ -369,10 +355,11 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
       "kill-grace-period" : 0,
       "transport-encryption" : [ ]
     }, {
-      "name" : "server",
+      "name" : "dag-scheduler",
       "goal" : "RUNNING",
+      "essential" : true,
       "resource-set" : {
-        "id" : "scheduler-resources",
+        "id" : "server-resources",
         "resource-specifications" : [ {
           "@type" : "DefaultResourceSpec",
           "name" : "cpus",
@@ -407,7 +394,7 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
         "volume-specifications" : [ {
           "@type" : "DefaultVolumeSpec",
           "type" : "ROOT",
-          "container-path" : "scheduler_volume",
+          "container-path" : "server_volume",
           "name" : "disk",
           "value" : {
             "type" : "SCALAR",
@@ -426,21 +413,22 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
         "principal" : "airflow-principal"
       },
       "command-spec" : {
-        "value" : "echo Scheduler && /usr/local/airflow/bin/start-scheduler.sh",
+        "value" : "echo '### Scheduler ###' && mkdir -p $MESOS_SANDBOX/airflow-shared-volume/airflow-dags/ && echo '### Dir: airflow-dags ###' && find / | grep airflow-dags && /usr/local/airflow/bin/start-scheduler.sh",
         "environment" : {
           "AIRFLOW_HOME" : "/usr/local/airflow",
+          "DAGS_FOLDER" : "$MESOS_SANDBOX/airflow-shared-volume/airflow-dags",
           "DAG_CONCURRENCY" : "16",
           "DEFAULT_DOCKER_CONTAINER_IMAGE" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
           "FRAMEWORK_NAME" : "airflow",
           "MAX_ACTIVE_RUNS_PER_DAG" : "16",
           "PARALLELISM" : "32",
-          "POSTGRES_PASSWORD" : "",
+          "POSTGRES_PASSWORD" : "changeme",
           "POSTGRES_USER" : "airflow",
           "USE_DOCKER_CONTAINER" : "true"
         }
       },
       "health-check-spec" : {
-        "command" : "echo 0",
+        "command" : "airflow list_dags",
         "max-consecutive-failures" : 5,
         "delay" : 0,
         "interval" : 60,
@@ -452,28 +440,10 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
       "discovery-spec" : null,
       "kill-grace-period" : 0,
       "transport-encryption" : [ ]
-    } ],
-    "placement-rule" : null,
-    "volumes" : [ ],
-    "pre-reserved-role" : "*",
-    "secrets" : [ ],
-    "share-pid-namespace" : false,
-    "allow-decommission" : false
-  }, {
-    "type" : "airflow-webserver",
-    "user" : "root",
-    "count" : 1,
-    "image" : "gregpalmermesosphere/airflow-dcos-package:1.8.0-1.0.1",
-    "networks" : [ ],
-    "rlimits" : [ {
-      "name" : "RLIMIT_NOFILE",
-      "soft" : 128000,
-      "hard" : 128000
-    } ],
-    "uris" : [ "test-executor-uri" ],
-    "task-specs" : [ {
-      "name" : "server",
+    }, {
+      "name" : "webserver",
       "goal" : "RUNNING",
+      "essential" : true,
       "resource-set" : {
         "id" : "webserver-resources",
         "resource-specifications" : [ {
@@ -551,23 +521,50 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
         "principal" : "airflow-principal"
       },
       "command-spec" : {
-        "value" : "echo Webserver && /usr/local/airflow/bin/start-webserver.sh",
+        "value" : "echo \"### Webserver ###\" && echo \"### FRAMEWORK_HOST: ${FRAMEWORK_HOST} ###\" && /usr/local/airflow/bin/start-webserver.sh",
         "environment" : {
           "AIRFLOW_HOME" : "/usr/local/airflow",
+          "DAGS_FOLDER" : "$MESOS_SANDBOX/airflow-shared-volume/airflow-dags",
           "FRAMEWORK_NAME" : "airflow",
-          "POSTGRES_PASSWORD" : "",
+          "POSTGRES_PASSWORD" : "changeme",
           "POSTGRES_USER" : "airflow"
         }
       },
-      "health-check-spec" : null,
+      "health-check-spec" : {
+        "command" : "curl server-0-webserver.${FRAMEWORK_HOST}:${AIRFLOW_WEBSERVER_HTTP_PORT}",
+        "max-consecutive-failures" : 5,
+        "delay" : 0,
+        "interval" : 60,
+        "timeout" : 10,
+        "gracePeriod" : 360
+      },
       "readiness-check-spec" : null,
       "config-files" : [ ],
       "discovery-spec" : null,
       "kill-grace-period" : 0,
       "transport-encryption" : [ ]
     } ],
-    "placement-rule" : null,
-    "volumes" : [ ],
+    "placement-rule" : {
+      "@type" : "IsLocalRegionRule"
+    },
+    "volumes" : [ {
+      "@type" : "DefaultVolumeSpec",
+      "type" : "ROOT",
+      "container-path" : "airflow-shared-volume",
+      "name" : "disk",
+      "value" : {
+        "type" : "SCALAR",
+        "scalar" : {
+          "value" : 20.0
+        },
+        "ranges" : null,
+        "set" : null,
+        "text" : null
+      },
+      "role" : "airflow-role",
+      "pre-reserved-role" : "*",
+      "principal" : "airflow-principal"
+    } ],
     "pre-reserved-role" : "*",
     "secrets" : [ ],
     "share-pid-namespace" : false,
@@ -576,29 +573,29 @@ INFO  2017-11-20 13:32:23,791 [Test worker] com.mesosphere.sdk.config.DefaultCon
   "replacement-failure-policy" : null,
   "user" : "root"
 }
-INFO  2017-11-20 13:32:23,805 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(88): Skipping config diff: There is no old config target to diff against
-INFO  2017-11-20 13:32:23,811 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(126): Updating target configuration: Prior target configuration 'null' is different from new configuration 'f8e39690-92a5-4458-9dd3-024ff3a855a3'. 
-INFO  2017-11-20 13:32:23,811 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(230): Testing deserialization of 1 listed configurations before cleanup:
-INFO  2017-11-20 13:32:23,812 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(234): - f8e39690-92a5-4458-9dd3-024ff3a855a3: OK
-INFO  2017-11-20 13:32:23,812 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:clearConfigsNotListed(339): Cleaning up 0 unused configs: []
-INFO  2017-11-20 13:32:23,823 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-postgresql-0, with tasks: [server]
-WARN  2017-11-20 13:32:23,829 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-postgresql-0-server at: Tasks/airflow-postgresql-0-server/TaskInfo
-INFO  2017-11-20 13:32:23,835 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,836 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,840 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-dag-scheduler-0, with tasks: [initdb]
-WARN  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-dag-scheduler-0-initdb at: Tasks/airflow-dag-scheduler-0-initdb/TaskInfo
-INFO  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,841 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,842 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-dag-scheduler-0, with tasks: [server]
-WARN  2017-11-20 13:32:23,843 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-dag-scheduler-0-server at: Tasks/airflow-dag-scheduler-0-server/TaskInfo
-INFO  2017-11-20 13:32:23,843 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,844 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-dag-scheduler-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,844 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: airflow-webserver-0, with tasks: [server]
-WARN  2017-11-20 13:32:23,845 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: airflow-webserver-0-server at: Tasks/airflow-webserver-0-server/TaskInfo
-INFO  2017-11-20 13:32:23,845 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-webserver-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,846 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): airflow-webserver-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
-INFO  2017-11-20 13:32:23,848 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getPlans(376): Got 1 YAML plan: [deploy]
-INFO  2017-11-20 13:32:23,849 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:selectDeployPlan(425): Using regular deploy plan. (Has completed deployment: false, Custom update plan defined: false)
+INFO  2018-04-09 09:17:56,834 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(88): Skipping config diff: There is no old config target to diff against
+INFO  2018-04-09 09:17:56,840 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:updateConfiguration(126): Updating target configuration: Prior target configuration 'null' is different from new configuration '8e8eaa94-2a59-42b2-98f9-cf3e742a3f67'. 
+INFO  2018-04-09 09:17:56,841 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(230): Testing deserialization of 1 listed configurations before cleanup:
+INFO  2018-04-09 09:17:56,841 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:cleanupDuplicateAndUnusedConfigs(234): - 8e8eaa94-2a59-42b2-98f9-cf3e742a3f67: OK
+INFO  2018-04-09 09:17:56,842 [Test worker] com.mesosphere.sdk.config.DefaultConfigurationUpdater:clearConfigsNotListed(363): Cleaning up 0 unused configs: []
+INFO  2018-04-09 09:17:56,852 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: postgresql-0, with tasks: [server]
+WARN  2018-04-09 09:17:56,858 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: postgresql-0-server at: Tasks/postgresql-0-server/TaskInfo
+INFO  2018-04-09 09:17:56,866 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,867 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): postgresql-0:[server]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,871 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: server-0, with tasks: [initdb]
+WARN  2018-04-09 09:17:56,872 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: server-0-initdb at: Tasks/server-0-initdb/TaskInfo
+INFO  2018-04-09 09:17:56,873 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,873 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[initdb]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,874 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: server-0, with tasks: [dag-scheduler]
+WARN  2018-04-09 09:17:56,875 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: server-0-dag-scheduler at: Tasks/server-0-dag-scheduler/TaskInfo
+INFO  2018-04-09 09:17:56,875 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[dag-scheduler]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,875 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[dag-scheduler]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,876 [Test worker] com.mesosphere.sdk.scheduler.plan.DefaultStepFactory:getStep(40): Generating step for pod: server-0, with tasks: [webserver]
+WARN  2018-04-09 09:17:56,877 [Test worker] com.mesosphere.sdk.state.StateStore:fetchTask(290): No TaskInfo found for the requested name: server-0-webserver at: Tasks/server-0-webserver/TaskInfo
+INFO  2018-04-09 09:17:56,877 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[webserver]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,878 [Test worker] com.mesosphere.sdk.scheduler.plan.DeploymentStep:setStatus(65): server-0:[webserver]: changed status from: PENDING to: PENDING (interrupted=false)
+INFO  2018-04-09 09:17:56,880 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:getPlans(383): Got 1 YAML plan: [deploy]
+INFO  2018-04-09 09:17:56,881 [Test worker] com.mesosphere.sdk.scheduler.SchedulerBuilder:selectDeployPlan(432): Using regular deploy plan. (Has completed deployment: false, Custom update plan defined: false)
 ]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

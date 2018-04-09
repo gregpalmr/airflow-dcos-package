@@ -11,7 +11,6 @@ import org.apache.mesos.SchedulerDriver;
 
 import com.mesosphere.sdk.specification.PodSpec;
 import com.mesosphere.sdk.specification.ResourceSpec;
-import com.mesosphere.sdk.specification.ServiceSpec;
 import com.mesosphere.sdk.specification.TaskSpec;
 import com.mesosphere.sdk.specification.VolumeSpec;
 import com.mesosphere.sdk.testutils.TestConstants;
@@ -23,7 +22,7 @@ import com.mesosphere.sdk.testutils.TestConstants;
 public class SendOffer implements Send {
 
     private final String podType;
-    private final Optional<String> podToReuseResources;
+    private final Optional<String> podToReuse;
     private final String hostname;
 
     /**
@@ -31,7 +30,7 @@ public class SendOffer implements Send {
      */
     public static class Builder {
         private final String podType;
-        private Optional<String> podToReuseResources;
+        private Optional<String> podToReuse;
         private String hostname;
 
         /**
@@ -40,7 +39,7 @@ public class SendOffer implements Send {
          */
         public Builder(String podType) {
             this.podType = podType;
-            this.podToReuseResources = Optional.empty();
+            this.podToReuse = Optional.empty();
             this.hostname = TestConstants.HOSTNAME;
         }
 
@@ -50,8 +49,8 @@ public class SendOffer implements Send {
          *
          * @param podIndex the index of the previous pod to be offered
          */
-        public Builder setResourcesFromPod(int podIndex) {
-            this.podToReuseResources = Optional.of(String.format("%s-%d", podType, podIndex));
+        public Builder setPodIndexToReoffer(int podIndex) {
+            this.podToReuse = Optional.of(getPodName(podType, podIndex));
             return this;
         }
 
@@ -64,13 +63,17 @@ public class SendOffer implements Send {
         }
 
         public SendOffer build() {
-            return new SendOffer(podType, podToReuseResources, hostname);
+            return new SendOffer(podType, podToReuse, hostname);
+        }
+
+        private static String getPodName(String podType, int podIndex) {
+            return String.format("%s-%d", podType, podIndex);
         }
     }
 
-    private SendOffer(String podType, Optional<String> podToReuseResources, String hostname) {
+    private SendOffer(String podType, Optional<String> podToReuse, String hostname) {
         this.podType = podType;
-        this.podToReuseResources = podToReuseResources;
+        this.podToReuse = podToReuse;
         this.hostname = hostname;
     }
 
@@ -83,22 +86,21 @@ public class SendOffer implements Send {
 
     @Override
     public String getDescription() {
-        if (podToReuseResources.isPresent()) {
-            return String.format("Reserved offer for pod=%s", podToReuseResources.get());
+        if (podToReuse.isPresent()) {
+            return String.format("Reserved offer for pod=%s", podToReuse.get());
         } else {
             return String.format("Unreserved offer for pod type=%s", podType);
         }
     }
 
     private Protos.Offer getOfferForPod(ClusterState state) {
-        ServiceSpec serviceSpec = state.getSchedulerConfig().getServiceSpec();
-        Optional<PodSpec> matchingSpec = serviceSpec.getPods().stream()
+        Optional<PodSpec> matchingSpec = state.getServiceSpec().getPods().stream()
                 .filter(podSpec -> podType.equals(podSpec.getType()))
                 .findAny();
         if (!matchingSpec.isPresent()) {
             throw new IllegalArgumentException(String.format("No PodSpec found with type=%s: types=%s",
                     podType,
-                    serviceSpec.getPods().stream()
+                    state.getServiceSpec().getPods().stream()
                             .map(podSpec -> podSpec.getType())
                             .collect(Collectors.toList())));
         }
@@ -109,11 +111,16 @@ public class SendOffer implements Send {
                 .setHostname(hostname);
         offerBuilder.getIdBuilder().setValue(UUID.randomUUID().toString());
         for (TaskSpec taskSpec : matchingSpec.get().getTasks()) {
-            if (podToReuseResources.isPresent()) {
+            if (podToReuse.isPresent()) {
                 // Copy resources from prior pod launch:
-                for (Protos.TaskInfo task : state.getLastLaunchedPod(podToReuseResources.get())) {
+                for (Protos.TaskInfo task : state.getLastLaunchedPod(podToReuse.get())) {
                     offerBuilder.addAllResources(task.getResourcesList());
                 }
+                // Copy executor id(s) from prior pod launch, if tasks are marked as running:
+                offerBuilder.addAllExecutorIds(state.getLastLaunchedPod(podToReuse.get()).stream()
+                        .map(taskInfo -> taskInfo.getExecutor().getExecutorId())
+                        .distinct()
+                        .collect(Collectors.toList()));
             } else {
                 // Create new unreserved resources:
                 for (ResourceSpec resourceSpec : taskSpec.getResourceSet().getResources()) {

@@ -9,8 +9,8 @@ public final class SDKBuildInfo
 
    public static final String NAME = "mesosphere.common";
 
-   public static final String GIT_SHA = "fafc01a-dirty";
+   public static final String GIT_SHA = "552b25e-dirty";
 
-   public static final long BUILD_TIME_EPOCH_MS = 1511202726328L;
+   public static final long BUILD_TIME_EPOCH_MS = 1523279858115L;
 
 }
